@@ -22,6 +22,7 @@ namespace CodeChallenge.Repositories
 
         public Employee Add(Employee employee)
         {
+            //AppDomainSetup id if one not given
             if (employee.EmployeeId == null)
                 employee.EmployeeId = Guid.NewGuid().ToString();
             _employeeContext.Employees.Add(employee);

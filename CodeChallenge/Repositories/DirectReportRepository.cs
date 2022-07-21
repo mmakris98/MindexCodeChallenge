@@ -29,6 +29,7 @@ namespace CodeChallenge.Repositories
 
         public List<DirectReport> GetById(string id)
         {
+            //get list of direct reports for an employee
             var directReports = _directReportContext.DirectReports.Where(e => e.EmployeeId == id);
             List<DirectReport> reports = new List<DirectReport>();
             foreach (DirectReport directReport in directReports)

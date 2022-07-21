@@ -24,16 +24,20 @@ namespace CodeChallenge.Repositories
 
         public Compensation Add(Compensation compensation)
         {
-            var employee = _employeeRepository.GetById(compensation.Employee.EmployeeId);
+            //check if employee exists
+            var employee = _employeeRepository.GetById(compensation.Employee.EmployeeId); 
             if (employee == null)
             {
-                compensation.Employee.EmployeeId = Guid.NewGuid().ToString();
                 _employeeRepository.Add(compensation.Employee);
             }
-
             compensation.CompensationId = compensation.Employee.EmployeeId;
-
-            _compensationContext.Compensations.Add(compensation);
+            //check if compensation exists
+            var comp = GetById(compensation.CompensationId);
+            if(comp == null)
+            {
+                _compensationContext.Compensations.Add(compensation);
+            }            
+            
             return compensation;
         }
 

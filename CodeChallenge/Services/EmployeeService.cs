@@ -27,8 +27,10 @@ namespace CodeChallenge.Services
         {
             if(employee != null)
             {
+                //check employee does not already exist
                 if (_employeeRepository.GetById(employee.EmployeeId) == null)
                     _employeeRepository.Add(employee);
+                //check for direct reports to store in db
                 if (employee.DirectReports != null)
                 {
                     foreach (var emp in employee.DirectReports)
@@ -42,6 +44,7 @@ namespace CodeChallenge.Services
                         _directReportRepository.Add(new DirectReport() { EmployeeId = employee.EmployeeId, DirectReportId = id });
                     }
                 }      
+                //save db
                 _employeeRepository.SaveAsync().Wait();
                 _directReportRepository.SaveAsync().Wait();
             }
@@ -53,10 +56,16 @@ namespace CodeChallenge.Services
         {
             if(!String.IsNullOrEmpty(id))
             {
+                //check if employee exists
                 var employee = _employeeRepository.GetById(id);
                 if(employee != null)
-                    employee.DirectReports = _directReportRepository.GetById(id).Select(x => { return _employeeRepository.GetById(x.DirectReportId); }).ToList();
-                return employee;
+                {
+                    //check employee has reports
+                    var reports = _directReportRepository.GetById(id);
+                    if (reports != null)
+                        employee.DirectReports = reports.Select(x => { return _employeeRepository.GetById(x.DirectReportId); }).ToList();
+                    return employee;
+                }                   
             }
 
             return null;
@@ -90,22 +99,25 @@ namespace CodeChallenge.Services
 
             if (employee != null)
             {
-                reportingStructure.NumberOfReports = GetNumberOfDirectReports(employee.EmployeeId); ;
+                reportingStructure.NumberOfReports = GetNumberOfDirectReports(employee.EmployeeId);
             }
                 
             return reportingStructure;          
         }
 
-        public int GetNumberOfDirectReports(String id)
+        //recursive function to check the amount of direct reports for an employee
+        private int GetNumberOfDirectReports(String id)
         {
             var numberOfReports = 0;
             var directReports = _directReportRepository.GetById(id);
-            if(directReports != null)
+            if (directReports != null)
+            {
                 foreach (DirectReport report in directReports)
                 {
                     numberOfReports++;
                     numberOfReports += GetNumberOfDirectReports(report.DirectReportId);
                 }
+            }
             return numberOfReports;
         }
         

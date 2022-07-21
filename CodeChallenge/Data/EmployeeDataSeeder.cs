@@ -28,12 +28,14 @@ namespace CodeChallenge.Data
             {
                 List<Employee> employees = LoadEmployees();
                 _employeeContext.Employees.AddRange(employees);
+                //set direct reports for employees
                 foreach (Employee employee in employees)
                 {
                     if (employee.DirectReports != null)
                     {
                         foreach (Employee report in employee.DirectReports)
                         {
+                            //add direct report link to db for each direct report of employee
                             _directReportContext.DirectReports.Add(new DirectReport() { EmployeeId = employee.EmployeeId, DirectReportId = report.EmployeeId});
                         }
                     }                   
