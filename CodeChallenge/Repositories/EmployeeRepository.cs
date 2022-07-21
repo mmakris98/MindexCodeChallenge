@@ -22,7 +22,8 @@ namespace CodeChallenge.Repositories
 
         public Employee Add(Employee employee)
         {
-            employee.EmployeeId = Guid.NewGuid().ToString();
+            if (employee.EmployeeId == null)
+                employee.EmployeeId = Guid.NewGuid().ToString();
             _employeeContext.Employees.Add(employee);
             return employee;
         }

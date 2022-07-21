@@ -27,17 +27,21 @@ namespace CodeChallenge.Services
         {
             if(employee != null)
             {
-                _employeeRepository.Add(employee);
-                foreach (var emp in employee.DirectReports)
+                if (_employeeRepository.GetById(employee.EmployeeId) == null)
+                    _employeeRepository.Add(employee);
+                if (employee.DirectReports != null)
                 {
-                    var id = emp.EmployeeId;
-                    if (_employeeRepository.GetById(id) == null)
+                    foreach (var emp in employee.DirectReports)
                     {
-                        var newEmp = _employeeRepository.Add(emp);
-                        id = newEmp.EmployeeId;
-                    }                       
-                    _directReportRepository.Add(new DirectReport() { EmployeeId = employee.EmployeeId, DirectReportId = id});
-                }                
+                        var id = emp.EmployeeId;
+                        if (_employeeRepository.GetById(id) == null)
+                        {
+                            var newEmp = _employeeRepository.Add(emp);
+                            id = newEmp.EmployeeId;
+                        }
+                        _directReportRepository.Add(new DirectReport() { EmployeeId = employee.EmployeeId, DirectReportId = id });
+                    }
+                }      
                 _employeeRepository.SaveAsync().Wait();
                 _directReportRepository.SaveAsync().Wait();
             }
