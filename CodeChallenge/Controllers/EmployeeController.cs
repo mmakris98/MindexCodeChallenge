@@ -45,21 +45,6 @@ namespace CodeChallenge.Controllers
             return Ok(employee);
         }
 
-        [HttpGet("reportStructure/{id}", Name = "getEmployeeReportStructure")]
-        public IActionResult GetEmployeeReportStructure(String id)
-        {
-            _logger.LogDebug($"Received employee report structure get request for '{id}'");
-
-            var employee = _employeeService.GetById(id);
-
-            if (employee == null)
-                return NotFound();
-
-            var numberofReports = _employeeService.GetReportingStructure(id);
-
-            return Ok(numberofReports);
-        }
-
         [HttpPut("{id}")]
         public IActionResult ReplaceEmployee(String id, [FromBody]Employee newEmployee)
         {
@@ -73,5 +58,45 @@ namespace CodeChallenge.Controllers
 
             return Ok(newEmployee);
         }
+
+        //Report Structure
+        [HttpGet("reportStructure/{id}")]
+        public IActionResult GetEmployeeReportStructure(String id)
+        {
+            _logger.LogDebug($"Received employee report structure get request for '{id}'");
+
+            var employee = _employeeService.GetById(id);
+
+            if (employee == null)
+                return NotFound();
+
+            var numberofReports = _employeeService.GetReportingStructure(id);
+
+            return Ok(numberofReports);
+        }
+        
+        //Compensation
+        [HttpPost("compensation")]
+        public IActionResult CreateCompensationForEmployee([FromBody] Compensation compensation)
+        {
+            _logger.LogDebug($"Received employee compensation create request for '{compensation.Employee.FirstName}, {compensation.Employee.FirstName}'");
+
+            _employeeService.CreateCompensation(compensation);
+
+            return CreatedAtRoute("getEmployeeCompensationById", new { id = compensation.CompensationId }, compensation);
+        }
+
+        [HttpGet("compensation/{id}", Name = "getEmployeeCompensationById")]
+        public IActionResult GetEmployeeCompensationById(String id)
+        {
+            _logger.LogDebug($"Received employee compensation get request for '{id}'");
+
+            var compensation = _employeeService.GetCompensationById(id);
+
+            if (compensation == null)
+                return NotFound();
+
+            return Ok(compensation);
+        }        
     }
 }

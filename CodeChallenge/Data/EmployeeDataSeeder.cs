@@ -11,11 +11,15 @@ namespace CodeChallenge.Data
     public class EmployeeDataSeeder
     {
         private EmployeeContext _employeeContext;
+        private DirectReportContext _directReportContext;
+        private CompensationContext _compensationContext;
         private const String EMPLOYEE_SEED_DATA_FILE = "resources/EmployeeSeedData.json";
 
-        public EmployeeDataSeeder(EmployeeContext employeeContext)
+        public EmployeeDataSeeder(EmployeeContext employeeContext, DirectReportContext directReportContext, CompensationContext compensationContext)
         {
             _employeeContext = employeeContext;
+            _directReportContext = directReportContext;
+            _compensationContext = compensationContext;
         }
 
         public async Task Seed()
@@ -24,8 +28,19 @@ namespace CodeChallenge.Data
             {
                 List<Employee> employees = LoadEmployees();
                 _employeeContext.Employees.AddRange(employees);
+                foreach (Employee employee in employees)
+                {
+                    if (employee.DirectReports != null)
+                    {
+                        foreach (Employee report in employee.DirectReports)
+                        {
+                            _directReportContext.DirectReports.Add(new DirectReport() { EmployeeId = employee.EmployeeId, DirectReportId = report.EmployeeId});
+                        }
+                    }                   
+                }
 
                 await _employeeContext.SaveChangesAsync();
+                await _directReportContext.SaveChangesAsync();
             }
         }
 

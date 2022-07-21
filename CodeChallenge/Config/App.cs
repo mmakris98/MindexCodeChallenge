@@ -41,9 +41,15 @@ namespace CodeChallenge.Config
 
         private void AddServices(IServiceCollection services)
         {
+            services.AddDbContext<EmployeeContext>(options => options.UseInMemoryDatabase("EmployeeDB"));
+            services.AddDbContext<DirectReportContext>(options => options.UseInMemoryDatabase("DirectReportDB"));
+            services.AddDbContext<CompensationContext>(options => options.UseInMemoryDatabase("CompensationDB"));
 
             services.AddScoped<IEmployeeService, EmployeeService>();
-            services.AddScoped<IEmployeeRepository, EmployeeRespository>();
+
+            services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            services.AddScoped<ICompensationRepository, CompensationRepository>();
+            services.AddScoped<IDirectReportRepository, DirectReportRepository>();
 
             services.AddControllers();
         }
@@ -53,7 +59,14 @@ namespace CodeChallenge.Config
             new EmployeeDataSeeder(
                 new EmployeeContext(
                     new DbContextOptionsBuilder<EmployeeContext>().UseInMemoryDatabase("EmployeeDB").Options
-            )).Seed().Wait();
+                ),
+                new DirectReportContext(
+                    new DbContextOptionsBuilder<DirectReportContext>().UseInMemoryDatabase("DirectReportDB").Options
+                ),
+                new CompensationContext(
+                    new DbContextOptionsBuilder<CompensationContext>().UseInMemoryDatabase("CompensationDB").Options
+                )
+            ).Seed().Wait();
         }
     }
 }

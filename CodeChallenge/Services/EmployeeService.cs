@@ -11,11 +11,15 @@ namespace CodeChallenge.Services
     public class EmployeeService : IEmployeeService
     {
         private readonly IEmployeeRepository _employeeRepository;
+        private readonly ICompensationRepository _compensationRepository;
+        private readonly IDirectReportRepository _directReportRepository;
         private readonly ILogger<EmployeeService> _logger;
 
-        public EmployeeService(ILogger<EmployeeService> logger, IEmployeeRepository employeeRepository)
+        public EmployeeService(ILogger<EmployeeService> logger, IEmployeeRepository employeeRepository, ICompensationRepository compensationRepository, IDirectReportRepository directReportRepository)
         {
             _employeeRepository = employeeRepository;
+            _compensationRepository = compensationRepository;
+            _directReportRepository = directReportRepository;
             _logger = logger;
         }
 
@@ -24,7 +28,18 @@ namespace CodeChallenge.Services
             if(employee != null)
             {
                 _employeeRepository.Add(employee);
+                foreach (var emp in employee.DirectReports)
+                {
+                    var id = emp.EmployeeId;
+                    if (_employeeRepository.GetById(id) == null)
+                    {
+                        var newEmp = _employeeRepository.Add(emp);
+                        id = newEmp.EmployeeId;
+                    }                       
+                    _directReportRepository.Add(new DirectReport() { EmployeeId = employee.EmployeeId, DirectReportId = id});
+                }                
                 _employeeRepository.SaveAsync().Wait();
+                _directReportRepository.SaveAsync().Wait();
             }
 
             return employee;
@@ -34,7 +49,10 @@ namespace CodeChallenge.Services
         {
             if(!String.IsNullOrEmpty(id))
             {
-                return _employeeRepository.GetById(id);
+                var employee = _employeeRepository.GetById(id);
+                if(employee != null)
+                    employee.DirectReports = _directReportRepository.GetById(id).Select(x => { return _employeeRepository.GetById(x.DirectReportId); }).ToList();
+                return employee;
             }
 
             return null;
@@ -60,30 +78,56 @@ namespace CodeChallenge.Services
             return newEmployee;
         }
 
-        public int GetReportingStructure(string id)
+        //Reporting Structure
+        public ReportingStructure GetReportingStructure(string id)
         {
             var employee = GetById(id);
-            var numberOfReports = 0;
+            var reportingStructure = new ReportingStructure() {Employee = employee ,NumberOfReports = 0};
 
             if (employee != null)
-                numberOfReports = GetNumberOfDirectReports(employee);
+            {
+                reportingStructure.NumberOfReports = GetNumberOfDirectReports(employee.EmployeeId); ;
+            }
                 
-            return numberOfReports;
-           
+            return reportingStructure;          
         }
 
-        public int GetNumberOfDirectReports(Employee employee)
+        public int GetNumberOfDirectReports(String id)
         {
             var numberOfReports = 0;
-
-            if(employee.DirectReports != null)
-                foreach (Employee emp in employee.DirectReports)
+            var directReports = _directReportRepository.GetById(id);
+            if(directReports != null)
+                foreach (DirectReport report in directReports)
                 {
                     numberOfReports++;
-                    numberOfReports += GetNumberOfDirectReports(emp);
+                    numberOfReports += GetNumberOfDirectReports(report.DirectReportId);
                 }
-
             return numberOfReports;
+        }
+        
+        //Compensation
+        public Compensation CreateCompensation(Compensation compensation)
+        {
+            if (compensation != null)
+            {
+                _compensationRepository.Add(compensation);
+                _compensationRepository.SaveAsync().Wait();
+                _employeeRepository.SaveAsync().Wait();
+            }
+
+            return compensation;
+        }
+
+        public Compensation GetCompensationById(string id)
+        {
+            if (!String.IsNullOrEmpty(id))
+            {
+                var compensation = _compensationRepository.GetById(id);
+                compensation.Employee = _employeeRepository.GetById(id);
+                return compensation;
+            }
+
+            return null;
         }
     }
 }
